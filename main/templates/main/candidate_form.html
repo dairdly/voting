@@ -1,0 +1,30 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block main %}
+<div class="card w-md-full mx-auto ">
+    <h4 class="card-title">Register a new candidate</h4>
+    <form action="{% url 'register_candidate' %}" method="POST" class="">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.name.errors }}
+            <label for={{ form.name.id_for_label }} class="required">Name</label>
+            {{ form.name|add_class:"form-control"|attr:"required:required" }}
+        </div>
+        <div class="form-group">
+            {{ form.level.errors }}
+            <label for={{ form.level.id_for_label }} class="required">Level</label>
+            {{ form.level|add_class:"form-control"|attr:"required:required" }}
+        </div>
+        <div class="form-group">
+            {{ form.position.errors }}
+            <label for={{ form.position.id_for_label }} class="required">Position</label>
+            {{ form.position|add_class:"form-control"|attr:"required:required" }}
+        </div>
+        <input class="btn btn-primary" type="submit" value="submit" />
+    </form>
+</div>
+{% endblock main %}
+
+{% block js %}
+
+{% endblock js %}

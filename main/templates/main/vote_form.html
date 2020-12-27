@@ -1,0 +1,27 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block main %}
+<noscript>You must enable javascript in your browser to vote</noscript>
+<div class="card w-md-full mx-auto ">
+    <h4 class="card-title">Vote</h4>
+    <form action="{% url 'vote' %}" method="POST" class="">
+        {% csrf_token %}
+
+        {% for position in positions %}
+        <h3>{{ position.name }}</h3>
+        <div class="form-group">
+        {% for candidate in position.candidates.all %}
+        <div class="custom-radio">
+            <input type="radio" name="{{ position.name }}" id="radio-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="{{ candidate }}">
+            <label for="radio-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">{{ candidate }}</label>
+        </div>
+        {% empty %}
+        No candidate
+        {% endfor %}
+        </div>
+        {% endfor %}
+        <input class="m-15 btn btn-primary" type="submit" value="submit" />
+    </form>
+</div>
+
+{% endblock main %}

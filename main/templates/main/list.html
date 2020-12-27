@@ -1,0 +1,135 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block modal %}
+
+<div class="modal" id="modal-del-position" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <a href="{% url 'list' %}" class="close" role="button" aria-label="close">
+                <span aria-hidden="true">&times;</span>
+            </a>
+            <form method="POST" class="">
+                {% csrf_token %}
+                <p>Are you sure you want to delete this position? Candidates of this position won't be deleted</p>
+                <div class="text-right mt-20">
+                    <a href="{% url 'list' %}" class="btn mr-5" role="button">Cancel</a>
+                    <input class="btn btn-danger" type="submit" value="Delete" />
+                </div>
+            </form>
+        </div>
+    </div>
+</div>    
+<div class="modal" id="modal-del-candidate" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <a href="{% url 'list' %}" class="close" role="button" aria-label="close">
+                <span aria-hidden="true">&times;</span>
+            </a>
+            <form method="POST" class="">
+                {% csrf_token %}
+                <p>Are you sure you want to delete this candidate"?</p>
+                <div class="text-right mt-20">
+                    <a href="{% url 'list' %}" class="btn mr-5" role="button">Cancel</a>
+                    <input class="btn btn-danger" type="submit" value="Delete" />
+                </div>
+            </form>
+        </div>
+    </div>
+</div>    
+
+{% endblock modal %}
+
+{% block main %}
+<h4 class="text-center">List of candidates and positions</h4>
+<div class="card w-md-full mx-auto table-responsive">
+    <p class="card-title">Candidates</p>
+    {% if candidates %}
+        <p>There are {{ candidates.count }} candidates</p>
+    <table class="table table-stripped table-hover">
+        <thead>
+            <tr>
+                <th class="text-center"></th>
+                <th class="text-center">Name</th>
+                <th class="text-center">level</th>
+                <th class="text-center">votes</th>
+                <th class="text-center">Position</th>
+                <th class="text-center"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for position in positions %}
+                {% for candidate in position.candidates.all|dictsortreversed:"votes" %}
+                <tr>
+                    <th class="text-left font-size-12">{{ forloop.counter }}</th>
+                    <th class="text-center">{{ candidate.name }}</th>
+                    <th class="text-center">{{ candidate.level }}</th>
+                    <th class="text-center">{{ candidate.votes }}</th>
+                    <th class="text-center">{{ candidate.post }}</th>
+                    <th class="text-center"><a href="#modal-del-candidate" class="" role="button" onclick=confirmCandidateDelete({{candidate.pk}})>
+                    <span aria-hidden="true" class="text-danger">&times;</span></a></th>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    No candidate has been registered
+    {% endif %}
+
+</div>
+<div class="card w-md-full mx-auto table-responsive">
+    <p class="card-title">Positions</p>
+    {% if positions %}
+    <table class="table table-stripped table-hover">
+        <thead>
+            <tr>
+                <th class="text-center"></th>
+                <th class="text-center">Name</th>
+                <th class="text-center">Candidates</th>
+                <th class="text-center">Number of candidates</th>
+                <th class="text-center"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for position in positions %}
+            <tr>
+                <th class="text-center">{{ forloop.counter }}</th>
+                <th class="text-center">{{ position.name }}</th>
+                {% if position.candidates.all %}
+                <th class="text-center">{{ position.candidates.all|join:"</br>" }}</th>
+                {% else %}
+                <th class="text-center">{{ None }}</th>
+                {% endif %}
+                <th class="text-center">{{ position.candidates.count }}</th>
+                <th class="text-center"><a href="#modal-del-position" class="" role="button" onclick=confirmPositionDelete({{position.pk}})>
+                <span aria-hidden="true" class="text-danger">&times;</span></a></th>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    No position has been registered
+    {% endif %}
+</div>
+
+{% endblock main %}
+
+{% block js %}
+    <script>
+        // get the pk inline and call the modal. if modal form is submitted them stop it and call delete url with the pk
+        const confirmPositionDelete = function(pk) {
+           const delPositionForm = document.querySelector("#modal-del-position form");
+            delPositionForm.onsubmit = async (e) => {
+                e.preventDefault();
+                window.location.href = `/position/${pk}/delete`;
+            }
+        }    
+        const confirmCandidateDelete = function(pk) {
+           const delCandidateForm = document.querySelector("#modal-del-candidate form");
+            delCandidateForm.onsubmit = async (e) => {
+                e.preventDefault();
+                window.location.href = `/candidate/${pk}/delete`;
+            }
+        }    
+    </script>
+{% endblock js %}

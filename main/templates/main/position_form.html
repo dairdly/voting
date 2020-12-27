@@ -1,0 +1,20 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block main %}
+<div class="card w-md-full mx-auto ">
+    <h4 class="card-title">Create a New Position</h4>
+    <form action="{% url 'register_position' %}" method="POST" class="">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.name.errors }}
+            <label for={{ form.name.id_for_label }} class="required">Name</label>
+            {{ form.name|add_class:"form-control"|attr:"required:required" }}
+        </div>
+        <input class="btn btn-primary" type="submit" value="submit" />
+    </form>
+</div>
+{% endblock main %}
+
+{% block js %}
+
+{% endblock js %}

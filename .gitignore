@@ -1,0 +1,7 @@
+env/*
+halfmoon*
+__pycache__
+.pytest_cache
+.vscode*
+*/migrations/*
+config.py

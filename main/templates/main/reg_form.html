@@ -1,0 +1,20 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block main %}
+<div class="card w-md-full mx-auto ">
+    <h4 class="card-title">Enter your reg number in the format mouau/xxx/xx/xxxxxx</h4>
+    <form action="{% url 'home' %}" method="POST" class="">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.reg_number.errors }}
+            <label for={{ form.reg_number.id_for_label }} class="required">Reg Number</label>
+            {{ form.reg_number|add_class:"form-control"|attr:"required:required" }}
+        </div>
+        <input class="btn btn-primary" type="submit" value="submit" />
+    </form>
+</div>
+{% endblock main %}
+
+{% block js %}
+
+{% endblock js %}
