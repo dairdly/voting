@@ -2,13 +2,23 @@
 {% load widget_tweaks %}
 {% block main %}
 <div class="card w-md-full mx-auto ">
-    <h4 class="card-title">Enter your reg number in the format mouau/xxx/xx/xxxxxx</h4>
-    <form action="{% url 'home' %}" method="POST" class="">
+    <h4 class="card-title">Enter your MOUAU portal issued username and password</h4>
+    <form action="{% url 'reg' %}" method="POST" class="">
         {% csrf_token %}
+        {% for error in form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endfor %}
         <div class="form-group">
-            {{ form.reg_number.errors }}
-            <label for={{ form.reg_number.id_for_label }} class="required">Reg Number</label>
-            {{ form.reg_number|add_class:"form-control"|attr:"required:required" }}
+            {{ form.username.errors }}
+            <label for={{ form.username.id_for_label }} class="required">Username</label>
+            {{ form.username|add_class:"form-control"|attr:"required:required" }}
+        </div>
+        <div class="form-group">
+            {{ form.password.errors }}
+            <label for={{ form.password.id_for_label }} class="required">Password</label>
+            {{ form.password|add_class:"form-control"|attr:"required:required" }}
         </div>
         <input class="btn btn-primary" type="submit" value="submit" />
     </form>

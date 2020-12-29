@@ -1,31 +1,49 @@
 from django.core.exceptions import ValidationError
 from django import forms
+from django.urls import reverse
 
-from main.reg import student
 from main.models import Candidate, Position
 
-import re
+import requests
+
+
+def validate_student(username, password):
+    data = {
+        'username': username,
+        'password': password
+    }
+    try:
+        response = requests.post("https://mouauportal.edu.ng/login.php", data)
+    except requests.exceptions.ConnectionError:
+        return None
+    if response.url == 'https://mouauportal.edu.ng/my-account-student.php':
+        return True
+    else:
+        return False
+        
 
 class RegForm(forms.Form):
-    reg_number = forms.CharField(max_length="20")
+    username = forms.CharField(max_length="10")
+    password = forms.CharField(max_length="10", widget=forms.widgets.PasswordInput())
 
-    def clean_reg_number(self):
-        reg_number = self.cleaned_data.get("reg_number", "").upper()
-        regex = "MOUAU/[a-zA-Z]{3}/[0-9]{2}/[0-9]{6}"
-        if not re.match(regex, reg_number):
-            raise ValidationError("Enter a valid reg number of the form 'mouau/xxx/xx/xxxxxx' ")
-        if reg_number not in student:
-            raise ValidationError("This reg number does not belong to any student in the database")
-        return reg_number
+    def clean(self):
+        cleaned_data = super(RegForm, self).clean()
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+        if validate_student(username, password):
+            return cleaned_data
+        else:
+            raise ValidationError('Invalid username and password')
 
+def format_name(name):
+    formatted = ""
+    name_list = name.split()
+    for idx, word in enumerate(name_list):
+        formatted += word[0].upper() + word[1:].lower()
+        if (idx + 1) != len(name_list):
+            formatted += " "
+    return formatted
 
-class VoteForm(forms.Form):
-    candidate = forms.CharField(max_length="54")
-
-
-def strToList(string):
-    if string == "":
-        return []
 
 class CandidateRegistrationForm(forms.Form):
     name = forms.CharField(max_length=20)
@@ -33,18 +51,19 @@ class CandidateRegistrationForm(forms.Form):
     position = forms.ModelChoiceField(queryset=Position.objects.all())
 
     def clean_name(self):
-        name = self.cleaned_data.get("name")
-        if Candidate.objects.filter(name=name):
+        name = format_name(self.cleaned_data.get("name"))
+        try:
+            Candidate.objects.get(name=name)
             raise ValidationError("Candidate exists")
-        else:
+        except Candidate.DoesNotExist:
             return name
 
     def save(self, form):
-        candidate, created = Candidate.objects.get_or_create(
+        candidate = Candidate.objects.create(
             name = form.cleaned_data.get("name"),
             level = form.cleaned_data.get("level"),
             post = form.cleaned_data.get("position"),
-        ) 
+        )
         position = Position.objects.get(name=form.cleaned_data.get("position"))
         position.candidates.add(candidate)
         return candidate
@@ -55,13 +74,14 @@ class PositionRegistrationForm(forms.Form):
     
     def clean_name(self):
         name = self.cleaned_data.get("name").upper()
-        if Position.objects.filter(name=name):
-            raise ValidationError("Position already exists")
-        else:
+        try:
+            Position.objects.get(name=name)
+            raise ValidationError("Position exists")
+        except Position.DoesNotExist:
             return name 
 
     def save(self, form):
         position = Position.objects.create(
-            name=forms.cleaned_data.get("name"),
+            name=form.cleaned_data.get("name"),
         )
         return position 

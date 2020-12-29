@@ -26,7 +26,7 @@ SECRET_KEY = DJANGO_SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['mvoting.pythonanywhere.com', ]
+ALLOWED_HOSTS = ['mvoting.pythonanywhere.com', 'localhost',]
 
 
 # Application definition
@@ -136,3 +136,5 @@ USE_TZ = True
 
 STATIC_ROOT = PurePath.joinpath(BASE_DIR, 'static')
 STATIC_URL = '/static/'
+
+AUTH_USER_MODEL = 'main.User'

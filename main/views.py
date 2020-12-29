@@ -3,14 +3,16 @@ from django.views.generic import FormView, TemplateView, ListView, DeleteView, V
 from django.views.generic.base import TemplateResponseMixin
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect
 
 from main.forms import (
     RegForm, 
-    VoteForm,
     CandidateRegistrationForm,
     PositionRegistrationForm,
 )
-from main.models import Candidate, Position
+from main.models import Candidate, Position, User
 
 
 class RegFormView(FormView):
@@ -18,8 +20,27 @@ class RegFormView(FormView):
     success_url = reverse_lazy("vote")
     template_name = "main/reg_form.html"
 
+    def form_valid(self, form):
+        username = form.cleaned_data.get("username")
+        password = form.cleaned_data.get("password")
+        user, created = User.objects.get_or_create(username=username)
+        if created:
+            user.set_password(password)
+            user.save()
+        auth_user = authenticate(username=username, password=password)
+        login(self.request, auth_user)
+        if auth_user.hasVoted:
+            return HttpResponseRedirect(reverse('thanks'))
+        return super(RegFormView, self).form_valid(form)
+
 class VoteFormView(TemplateView):
     template_name = "main/vote_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(reverse("reg"))
+        else: 
+            return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         kwargs = super(VoteFormView, self).get_context_data(**kwargs)
@@ -29,7 +50,6 @@ class VoteFormView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         data = request.POST.copy()
-        data.pop('csrfmiddlewaretoken')
         for position in data:
             try:
                 candidate = Candidate.objects.get(name=data[position])
@@ -37,6 +57,9 @@ class VoteFormView(TemplateView):
                 candidate.save()
             except Candidate.DoesNotExist:
                 pass
+        user = self.request.user
+        user.hasVoted = True
+        user.save()
         return HttpResponseRedirect(reverse('thanks'))
 
 
@@ -60,8 +83,7 @@ class PositionRegistrationView(FormView):
     success_url = reverse_lazy('list')
 
     def form_valid(self, form):
-        position = Position(name = form.cleaned_data.get("name").upper())
-        position.save()
+        form.save(form)
         messages.add_message(self.request, messages.SUCCESS, "Position has been successfully created")
         return super(PositionRegistrationView, self).form_valid(form)
 

@@ -1,6 +1,0 @@
-student = {
-    'MOUAU/CME/13/284048',
-    'MOUAU/CME/18/277658',
-    'MOUAU/CME/20/285658',
-    'MOUAU/CME/14/242448'
-}
