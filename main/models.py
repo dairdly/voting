@@ -1,9 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models 
-from django.utils import timezone
+
 
 from datetime import datetime
-
 
 class CustomAccountManager(BaseUserManager):
 
@@ -103,8 +102,8 @@ class Election(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if datetime.now(timezone.utc) >= self.start:
+        if datetime.now() >= self.start:
             self.started = True
-        if datetime.now(timezone.utc) >= self.end:
+        if datetime.now() >= self.end:
             self.ended = True
         return super().save(*args, **kwargs)

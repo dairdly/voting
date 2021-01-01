@@ -162,11 +162,14 @@ class LogoutView(TemplateView):
         return HttpResponseRedirect(reverse('reg'))
   
 
-class ManageElectionView(AdminRequiredMixin, CreateView):
+class ManageElectionView(AdminRequiredMixin, FormView):
     form_class = StartElectionForm
     model = Election
     template_name = 'main/manage.html'
-    success_url = reverse_lazy('manage')
+
+    def form_valid(self, form):
+        form.save(form)
+        return HttpResponseRedirect(reverse('manage'))
 
     def get_context_data(self, **kwargs):
         kwargs = super().get_context_data(**kwargs)

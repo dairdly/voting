@@ -6,9 +6,7 @@ from main.models import Candidate, Position, Election, User
 from datetime import datetime
 
 import requests
-import datetime
-import pytz
-utc = pytz.UTC
+
 
 def validate_student(username, password):
     data = {
@@ -138,8 +136,8 @@ class StartElectionForm(forms.ModelForm):
         end = " ".join(duration.split()[3:])
         election = Election.objects.create(
             name = form.cleaned_data.get("name"),
-            start = utc.localize(datetime.strptime(start, "%Y-%m-%d %H:%M")), 
-            end = utc.localize(datetime.strptime(end, "%Y-%m-%d %H:%M"))
+            start = datetime.strptime(start, "%Y-%m-%d %H:%M"), 
+            end = datetime.strptime(end, "%Y-%m-%d %H:%M")
         )
         return election
 

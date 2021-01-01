@@ -2,7 +2,7 @@ from django.shortcuts import redirect, reverse
 from django.contrib import messages
 from django.http.response import HttpResponseRedirect
 
-from main.models import User
+from main.models import User, Election
 
 
 class UserRequiredMixin:
@@ -37,7 +37,11 @@ class AdminRequiredMixin:
         if created:
             admin.set_password('admin')
             admin.save()
-        
+        try:
+            Election.objects.all().last().save()
+        except:
+            pass
+            
         if request.user.is_superuser:
             return super().dispatch(request, *args, **kwargs)
         else:
