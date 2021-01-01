@@ -14,6 +14,8 @@
   <title>MOUAU voting</title>
   <link href="{% static 'main/css/halfmoon.css' %}" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/css/halfmoon-variables.min.css" rel="stylesheet" />
+  {% block css %}{% endblock css %}
+
   <script src="https://kit.fontawesome.com/3e4d940317.js" crossorigin="anonymous"></script>
 
 </head>
@@ -42,6 +44,17 @@
         <ul class="navbar-nav d-none d-md-flex">
           <li class="nav-item"><a class="nav-link" href="{% url 'register_candidate' %}">Register Candidate</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'register_position' %}">Register Position</a></li>
+
+          <form method="POST" action="{% url 'logout' %}" id='logout_form'>
+          {% csrf_token %}
+          <input type="submit" value="submit" />
+          </form>
+
+          {% if view.request.user.username == 'staff' %}
+          <li class="nav-item"><a class="nav-link" href="#" onclick=logout()>Logout as Staff</a></li>
+          {% elif view.request.user.username == 'admin' %}
+          <li class="nav-item"><a class="nav-link" href="#" onclick=logout()>Logout as Admin</a></li>
+          {% endif %}
         </ul>
       </div>
     </nav>
@@ -57,18 +70,30 @@
           <i class="fa fa-moon-o" aria-hidden="true"></i>
           <span>Toggle Dark mode</span>
         </button>
+        {% if view.request.user.username == 'staff' %}
+          <a class="ml-20 mt-10" href="#" onclick=logout()>Logout as Staff</a>
+          {% elif view.request.user.username == 'admin' %}
+          <a class="ml-20 mt-10" href="#" onclick=logout()>Logout as Admin</a>
+          {% endif %}
       </div>
 
       <div class="sidebar-content">
         <h5 class="sidebar-title">General</h5>
         <div class="sidebar-divider"></div>
         <a href="{% url 'reg' %}" class="sidebar-link">Vote</a>
+        <a href="{% url 'vlist' %}" class="sidebar-link">Voter's List</a>
       </br>
         <h5 class="sidebar-title">Election Staff</h5>
         <div class="sidebar-divider"></div>
         <a href="{% url 'register_candidate' %}" class="sidebar-link">Register Candidate</a>
         <a href="{% url 'register_position' %}" class="sidebar-link">Register Position</a>
-        <a href="{% url 'list' %}" class="sidebar-link">Full list</a>
+        <a href="{% url 'list' %}" class="sidebar-link">Staff List</a>
+      </br>
+        <h5 class="sidebar-title">Election Admin</h5>
+        <div class="sidebar-divider"></div>
+        <a href="{% url 'manage' %}" class="sidebar-link">Manage Election</a>
+        <a href="{% url 'change-codes' %}" class="sidebar-link">Manage Codes</a>
+        <a href="{% url 'result' %}" class="sidebar-link">Election Result</a>
       </div>
     </div>
 
@@ -76,7 +101,7 @@
       <div class="content">
         {% if messages %}
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|lower }}" role="alert">
+        <div class="alert alert-{{ message.tags|lower }} filled my-5" role="alert">
           {{ message }}
         </div>
         {% endfor %}
@@ -87,6 +112,15 @@
   </div>
   <script src="{% static 'main/js/halfmoon.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/js/halfmoon.min.js"></script>
+  <script>
+    const logout_input = document.querySelector("#logout_form input[type='submit']");
+    logout_input.style.display = 'none';
+    
+    const logout = function() {
+      logout_input.click();
+      console.log('called')
+    };
+  </script>
   {% block js %} {% endblock js %}
 </body>
 

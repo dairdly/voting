@@ -1,0 +1,70 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block main %}
+<div class="card w-md-full mx-auto table-responsive">
+    <h4 class="card-title">Change Staff Access Code</h4>
+    <form method='POST' action="{% url 'change-staff-code' %}">
+        {% csrf_token %}
+        {% for error in sForm.non_field_errors %}
+        <div class="alert alert-danger filled my-5" role="alert">
+            {{ error }}
+        </div>
+        {% endfor %}
+        <div class="form-group">
+            {% for error in sForm.old_access_code.errors %}
+                <div class="alert alert-danger filled my-5" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+            <label for="id_old_access_code">Old access code:</label>
+            <input type="text" name="old_access_code" required id="id_old_access_code" class="form-control" />
+        </div>
+        <div class="form-group">
+            {% for error in sForm.new_access_code.errors %}
+                <div class="alert alert-danger filled my-5" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+            <label for="id_new_access_code">New access code:</label>
+            <input type="text" name="new_access_code" required id="id_new_access_code" class="form-control" />
+        </div>
+        <input class="btn btn-secondary" type="submit" value="Change" />
+    </form>   
+</div>
+<div class="card w-md-full mx-auto table-responsive">
+    <h4 class="card-title">Change Admin Access Code</h4>
+    <form method='POST' action="{% url 'change-admin-code' %}">
+        {% csrf_token %}
+        {% for error in aForm.non_field_errors %}
+        <div class="alert alert-danger filled my-5" role="alert">
+            {{ error }}
+        </div>
+        {% endfor %}
+        <div class="form-group">
+            {% for error in aForm.old_access_code.errors %}
+                <div class="alert alert-danger filled my-5" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+            <label for="id_old_access_code">Old access code:</label>
+            <input type="text" name="old_access_code" required id="id_old_access_code" class="form-control" />
+        </div>
+        <div class="form-group">
+            {% for error in aForm.new_access_code.errors %}
+                <div class="alert alert-danger filled my-5" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+            <label for="id_new_access_code">New access code:</label>
+            <input type="text" name="new_access_code" required id="id_new_access_code" class="form-control" />
+        </div>
+        <input class="btn btn-secondary" type="submit" value="Change" />
+    </form>
+</div>
+
+
+{% endblock main %}
+
+{% block js %}
+
+{% endblock js %}

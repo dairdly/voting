@@ -5,6 +5,11 @@
     <h4 class="card-title">Create a New Position</h4>
     <form action="{% url 'register_position' %}" method="POST" class="">
         {% csrf_token %}
+        {% for error in form.non_field_errors %}
+        <div class="alert alert-danger filled my-5" role="alert">
+            {{ error }}
+        </div>
+        {% endfor %}
         <div class="form-group">
             {{ form.name.errors }}
             <label for={{ form.name.id_for_label }} class="required">Name</label>

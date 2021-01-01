@@ -1,18 +1,21 @@
 from django.http.response import HttpResponseRedirect
-from django.views.generic import FormView, TemplateView, ListView, DeleteView, View
-from django.views.generic.base import TemplateResponseMixin
+from django.views.generic import FormView, TemplateView, View, ListView, CreateView
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
-from django.shortcuts import redirect
+from django.contrib.auth import authenticate, login, logout
 
 from main.forms import (
     RegForm, 
     CandidateRegistrationForm,
     PositionRegistrationForm,
+    AccessCodeForm,
+    StartElectionForm,
+    ChangeStaffCodeForm,
+    ChangeAdminCodeForm,
 )
-from main.models import Candidate, Position, User
+from main.models import Candidate, Position, User, Election
+from main.mixins import UserRequiredMixin, StaffRequiredMixin, AdminRequiredMixin
 
 
 class RegFormView(FormView):
@@ -33,14 +36,19 @@ class RegFormView(FormView):
             return HttpResponseRedirect(reverse('thanks'))
         return super(RegFormView, self).form_valid(form)
 
-class VoteFormView(TemplateView):
-    template_name = "main/vote_form.html"
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect(reverse("reg"))
-        else: 
-            return super().dispatch(request, *args, **kwargs)
+class VotersListView(TemplateView):
+    template_name = 'main/vlist.html'
+
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+        kwargs['candidates'] = Candidate.objects.all()
+        kwargs['positions'] = Position.objects.all()
+        return kwargs
+
+
+class VoteFormView(UserRequiredMixin, TemplateView):
+    template_name = "main/vote_form.html"
 
     def get_context_data(self, **kwargs):
         kwargs = super(VoteFormView, self).get_context_data(**kwargs)
@@ -60,13 +68,14 @@ class VoteFormView(TemplateView):
         user = self.request.user
         user.hasVoted = True
         user.save()
+        logout(self.request)
         return HttpResponseRedirect(reverse('thanks'))
 
 
 class ThanksView(TemplateView):
     template_name = "main/thanks.html"
 
-class CandidateRegistrationView(FormView):
+class CandidateRegistrationView(StaffRequiredMixin, FormView):
     form_class = CandidateRegistrationForm
     template_name = "main/candidate_form.html"
     success_url = reverse_lazy('list')
@@ -77,7 +86,7 @@ class CandidateRegistrationView(FormView):
         return super(CandidateRegistrationView, self).form_valid(form)
 
 
-class PositionRegistrationView(FormView):
+class PositionRegistrationView(StaffRequiredMixin, FormView):
     form_class = PositionRegistrationForm 
     template_name = "main/position_form.html"
     success_url = reverse_lazy('list')
@@ -88,7 +97,7 @@ class PositionRegistrationView(FormView):
         return super(PositionRegistrationView, self).form_valid(form)
 
 
-class PositionAndCandidateList(TemplateView):
+class PositionAndCandidateList(StaffRequiredMixin, TemplateView):
     template_name = "main/list.html"
 
     def get_context_data(self, **kwargs):
@@ -97,23 +106,117 @@ class PositionAndCandidateList(TemplateView):
         kwargs['positions'] = Position.objects.all()
         return kwargs
 
-def DeleteCandidate(request, pk):
-    try:
-        candidate = Candidate.objects.get(pk=pk)
-    except Candidate.DoesNotExist:
-        messages.add_message(request, messages.WARNING, "Candidate does not exist")
+class DeleteCandidate(StaffRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        try:
+            pk = kwargs.get('pk')
+            candidate = Candidate.objects.get(pk=pk)
+        except Candidate.DoesNotExist:
+            messages.add_message(request, messages.WARNING, "Candidate does not exist")
+            return HttpResponseRedirect(reverse("list"))
+        candidate.delete()
+        messages.add_message(request, messages.ERROR, "Candidate has been deleted")
         return HttpResponseRedirect(reverse("list"))
-    candidate.delete()
-    messages.add_message(request, messages.ERROR, "Candidate has been deleted")
-    return HttpResponseRedirect(reverse("list"))
 
 
-def DeletePosition(request, pk):
-    try:
-        position = Position.objects.get(pk=pk)
-    except Position.DoesNotExist:
-        messages.add_message(request, messages.WARNING, "Position does not exist")
+class DeletePosition(StaffRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        try:
+            pk = kwargs.get('pk')
+            position = Position.objects.get(pk=pk)
+        except Position.DoesNotExist:
+            messages.add_message(request, messages.WARNING, "Position does not exist")
+            return HttpResponseRedirect(reverse("list"))
+        position.delete()
+        messages.add_message(request, messages.ERROR, "Position has been deleted")
         return HttpResponseRedirect(reverse("list"))
-    position.delete()
-    messages.add_message(request, messages.ERROR, "Position has been deleted")
-    return HttpResponseRedirect(reverse("list"))
+
+
+class AccessCodeView(FormView):
+    form_class = AccessCodeForm
+    template_name = "main/access_code.html"
+
+    def form_valid(self, form):
+        access_code = form.cleaned_data.get('access_code')
+        staff = authenticate(username='staff', password=access_code)
+        admin = authenticate(username='admin', password=access_code)
+        if staff:
+            login(self.request, staff)
+        elif admin:
+            login(self.request, admin)
+        else:
+            return HttpResponseRedirect(reverse('access_code'))
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return HttpResponseRedirect(next_url)
+        else:
+            return HttpResponseRedirect(reverse('reg'))
+
+
+class LogoutView(TemplateView):
+    template_name = 'main/index.html'
+
+    def post(self, request, *args, **kwargs):
+        logout(request)
+        messages.add_message(request, messages.WARNING, "You are logged out")
+        return HttpResponseRedirect(reverse('reg'))
+  
+
+class ManageElectionView(AdminRequiredMixin, CreateView):
+    form_class = StartElectionForm
+    model = Election
+    template_name = 'main/manage.html'
+    success_url = reverse_lazy('manage')
+
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+        kwargs['election'] = Election.objects.last()
+        return kwargs
+
+    
+class CancelElectionView(AdminRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        Election.objects.all().delete()
+        messages.add_message(request, messages.SUCCESS, "Election has been deleted parmanently")
+        return HttpResponseRedirect(reverse('manage'))
+
+    
+class ResultView(AdminRequiredMixin, ListView):
+    template_name = 'main/result.html'
+    model = Position
+    context_object_name = 'positions'
+    paginate_by = 1
+    
+
+class ChangeAccessCodeView(AdminRequiredMixin, TemplateView):
+    template_name = 'main/change_codes.html'
+
+
+class ChangeStaffCodeView(AdminRequiredMixin, FormView):
+    form_class = ChangeStaffCodeForm
+    template_name = 'main/change_codes.html'
+    success_url = reverse_lazy('change-codes')
+
+    def form_valid(self, form):
+        form.save(form)
+        messages.add_message(self.request, messages.SUCCESS, "Staff Access Code has been changed")
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        """If the form is invalid, render the invalid form."""
+        return self.render_to_response(self.get_context_data(sForm=form))
+
+
+class ChangeAdminCodeView(AdminRequiredMixin, FormView):
+    form_class = ChangeAdminCodeForm
+    template_name = 'main/change_codes.html'
+    success_url = reverse_lazy('change-codes')
+
+    def form_valid(self, form):
+        form.save(form)
+        messages.add_message(self.request, messages.SUCCESS, "Admin Access Code has been changed")
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        """If the form is invalid, render the invalid form."""
+        return self.render_to_response(self.get_context_data(aForm=form))

@@ -1,0 +1,120 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block css %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+
+{% endblock css %}
+
+{% block modal %}
+<div class="modal" id="start-election" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <a href="{% url 'manage' %}" class="close" role="button" aria-label="close">
+                <span aria-hidden="true">&times;</span>
+            </a>
+            <form method="POST" action="{% url 'manage' %}" class="">
+                {% csrf_token %}
+                <h4>Start an Election</h4>
+                <div class="form-group">
+                    {{ form.name.errors }}
+                    <label for={{ form.name.id_for_label }} class="required">Name</label>
+                    {{ form.name|add_class:"form-control"|attr:"required:required" }}
+                </div>
+                <div class="form-group">
+                    {{ form.duration.errors }}
+                    <label for={{ form.duration.id_for_label }} class="required">Duration</label>
+                    {{ form.duration|add_class:"form-control"|attr:"required:required"|attr:"id:id_duration" }}
+                </div>
+                <input class="btn btn-primary" type="submit" value="submit" />
+            </form>
+        </div>
+    </div>
+</div>    
+<div class="modal" id="cancel-election" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <a href="{% url 'manage' %}" class="close" role="button" aria-label="close">
+                <span aria-hidden="true">&times;</span>
+            </a>
+            <form action="{% url 'cancel-election' %}" method="POST" class="">
+                {% csrf_token %}
+                <p>This action would parmanently delete this election and all Positions and Candidates registered</p>
+                <div class="text-right mt-20">
+                    <input class="btn btn-danger" type="submit" value="Delete Parmanently" />
+                    <a href="{% url 'manage' %}" class="btn btn-success mr-5" role="button">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>    
+
+{% endblock modal %}
+
+
+{% block main %}
+<div class="card w-md-full mx-auto ">
+    <h5 class="card-title">Manage The Election</h5>
+    {% if election %}
+    <a href="#cancel-election" class="btn btn-primary" role="button">Cancel Election</a>
+    {% else %}
+    <a href="#start-election" class="btn btn-primary" role="button">Start Election</a>
+    {% endif %}
+</div>
+
+<div class="card w-md-full mx-auto table-responsive">
+    <p class="card-title">{{ election.name }}</p>
+    {% if election %}
+        <table class="table table-stripped table-hover">
+            <tbody>
+                <tr>
+                    <th class="text-center">Number of candidates registered:</th>
+                    <th class="text-center">{{ election.candidates.count }}</th>
+                </tr>
+                <tr>
+                    <th class="text-center">Number of positions registered: </th>
+                    <th class="text-center">{{ election.positions.count }}</th>
+                </tr>
+                <tr>
+                    <th class="text-center">Start Date</th>
+                    <th class="text-center">{{ election.start }}</th>
+                </tr>
+                <tr>
+                    <th class="text-center">End Date: </th>
+                    <th class="text-center">{{ election.end }}</th>
+                </tr>
+                <tr>
+                    <th class="text-center">Has started: </th>
+                    <th class="text-center">{{ election.started }}</th>
+                </tr>
+                <tr>
+                    <th class="text-center">Has Ended: </th>
+                    <th class="text-center">{{ election.ended }}</th>
+                </tr>
+            </tbody>
+        </table>
+
+    {% else %}
+    No election has been registered
+    {% endif %}
+
+</div>
+
+{% endblock main %}
+
+{% block js %}
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        window.addEventListener("DOMContentLoaded", function() {
+            flatpickr("#id_duration", {
+                mode: "range",
+                enableTime: true,
+                altInput: true,
+                altFormat: "F j, Y",
+                dateFormat: 'Y-m-d H:i', 
+                minDate: new Date(),
+                defaultDate: [new Date(), new Date().fp_incr(1)]
+            });
+        });
+    </script>
+{% endblock js %}

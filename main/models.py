@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.contrib.auth.models import User
 from django.db import models 
+from django.utils import timezone
+
+from datetime import datetime
 
 
 class CustomAccountManager(BaseUserManager):
@@ -64,11 +66,6 @@ class Candidate(models.Model):
         ordering = ["votes", "level"]
         default_related_name = "aspirant"
 
-    class Candidate_positions(models.TextChoices):
-        sug_president = "SUG PRESIDENT"
-        vice_president = "VICE PRESIDENT"
-        director_of_transport = "DIRECTOR OF TRANSPORT" 
-
     class Levels(models.IntegerChoices):
         one = 100
         two = 200 
@@ -76,20 +73,38 @@ class Candidate(models.Model):
         four = 400 
         five = 500
 
-    name = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=30, unique=True)
     level = models.IntegerField(choices=Levels.choices)
     votes = models.IntegerField(default=0)
     post = models.ForeignKey('main.Position', on_delete=models.SET_NULL, null=True)
+    election = models.ForeignKey('main.Election', on_delete=models.CASCADE, related_name='candidates')
 
     def __str__(self):
         return self.name
 
 
 class Position(models.Model):
-
     name = models.CharField(max_length=30, unique=True)
     candidates = models.ManyToManyField(Candidate)
-
+    election = models.ForeignKey('main.Election', on_delete=models.CASCADE, null=True, related_name='positions')
+    
     def __str__(self):
         return self.name 
 
+
+class Election(models.Model):
+    name = models.CharField(max_length=20)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    started = models.BooleanField(default=False)
+    ended = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if datetime.now(timezone.utc) >= self.start:
+            self.started = True
+        if datetime.now(timezone.utc) >= self.end:
+            self.ended = True
+        return super().save(*args, **kwargs)

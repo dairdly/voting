@@ -1,11 +1,14 @@
 from django.core.exceptions import ValidationError
 from django import forms
-from django.urls import reverse
 
-from main.models import Candidate, Position
+from main.models import Candidate, Position, Election, User
+
+from datetime import datetime
 
 import requests
-
+import datetime
+import pytz
+utc = pytz.UTC
 
 def validate_student(username, password):
     data = {
@@ -27,13 +30,18 @@ class RegForm(forms.Form):
     password = forms.CharField(max_length="10", widget=forms.widgets.PasswordInput())
 
     def clean(self):
-        cleaned_data = super(RegForm, self).clean()
-        username = self.cleaned_data.get('username')
-        password = self.cleaned_data.get('password')
-        if validate_student(username, password):
-            return cleaned_data
+        election = Election.objects.filter(started=True).filter(ended=False).last()
+        if election: 
+            cleaned_data = super().clean()
+            username = self.cleaned_data.get('username')
+            password = self.cleaned_data.get('password')
+            if validate_student(username, password):
+                return cleaned_data
+            else:
+                raise ValidationError('Invalid username and password')
         else:
-            raise ValidationError('Invalid username and password')
+            raise ValidationError('No Election is running')
+
 
 def format_name(name):
     formatted = ""
@@ -58,11 +66,20 @@ class CandidateRegistrationForm(forms.Form):
         except Candidate.DoesNotExist:
             return name
 
+    def clean(self):
+        cleaned_data = super().clean()
+        election = Election.objects.filter(started=False).filter(ended=False).last()
+        if election == None:
+            raise ValidationError('No Election has been registered')
+        else:
+            return cleaned_data
+
     def save(self, form):
-        candidate = Candidate.objects.create(
+        candidate, created = Candidate.objects.get_or_create(
             name = form.cleaned_data.get("name"),
             level = form.cleaned_data.get("level"),
             post = form.cleaned_data.get("position"),
+            election = Election.objects.all().last()
         )
         position = Position.objects.get(name=form.cleaned_data.get("position"))
         position.candidates.add(candidate)
@@ -80,8 +97,89 @@ class PositionRegistrationForm(forms.Form):
         except Position.DoesNotExist:
             return name 
 
+    def clean(self):
+        election = Election.objects.filter(started=False).filter(ended=False).last()
+        if election:
+            return super().clean()
+        else:
+            raise ValidationError('No Election has been registered')
+
     def save(self, form):
-        position = Position.objects.create(
-            name=form.cleaned_data.get("name"),
+        position = Position.objects.get_or_create(
+            name = form.cleaned_data.get("name"),
+            election = Election.objects.all().last()
         )
         return position 
+
+    
+class AccessCodeForm(forms.Form):
+    access_code = forms.CharField(widget=forms.widgets.PasswordInput())
+
+
+class StartElectionForm(forms.ModelForm):
+    duration = forms.CharField()
+    class Meta:
+        model = Election
+        fields = ('name',)
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name').upper()
+        return name
+
+    def clean_duration(self):
+        duration = self.cleaned_data.get('duration')
+        if not len(duration.split()) == 5:
+            raise ValidationError("Select two dates for start and end")
+        return duration
+
+    def save(self, form):
+        duration = self.cleaned_data.get('duration')
+        start = " ".join(duration.split()[:2])
+        end = " ".join(duration.split()[3:])
+        election = Election.objects.create(
+            name = form.cleaned_data.get("name"),
+            start = utc.localize(datetime.strptime(start, "%Y-%m-%d %H:%M")), 
+            end = utc.localize(datetime.strptime(end, "%Y-%m-%d %H:%M"))
+        )
+        return election
+
+
+class ChangeStaffCodeForm(forms.Form):
+    old_access_code = forms.CharField()
+    new_access_code = forms.CharField()
+    
+    def clean_old_access_code(self):
+        old_access_code = self.cleaned_data.get('old_access_code')
+        staff = User.objects.get(username='staff')
+        if staff.check_password(old_access_code):
+            return old_access_code
+        else:
+            raise ValidationError("Incorrect Access Code")
+    
+    def save(self, form):
+        new_access_code = self.cleaned_data.get('new_access_code')
+        staff = User.objects.get(username='staff')
+        staff.set_password(new_access_code)
+        staff.save()
+        return staff
+        
+
+class ChangeAdminCodeForm(forms.Form):
+    old_access_code = forms.CharField()
+    new_access_code = forms.CharField()
+    
+    def clean_old_access_code(self):
+        old_access_code = self.cleaned_data.get('old_access_code')
+        admin = User.objects.get(username='admin')
+        if admin.check_password(old_access_code):
+            return old_access_code
+        else:
+            raise ValidationError("Incorrect Access Code")
+    
+    def save(self, form):
+        new_access_code = self.cleaned_data.get('new_access_code')
+        admin = User.objects.get(username='admin')
+        admin.set_password(new_access_code)
+        admin.save()
+        return admin
+    

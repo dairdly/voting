@@ -1,0 +1,76 @@
+{% extends 'main/index.html' %}
+{% load widget_tweaks %}
+{% block modal %}
+
+{% endblock modal %}
+
+{% block main %}
+<h4 class="text-center">List of candidates and positions</h4>
+<div class="card w-md-full mx-auto table-responsive">
+    <p class="card-title">Candidates</p>
+    {% if candidates %}
+        <p>There are {{ candidates.count }} candidates</p>
+    <table class="table table-stripped table-hover">
+        <thead>
+            <tr>
+                <th class="text-center"></th>
+                <th class="text-center">Name</th>
+                <th class="text-center">level</th>
+                <th class="text-center">Position</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for position in positions %}
+                {% for candidate in position.candidates.all|dictsortreversed:"votes" %}
+                <tr>
+                    <th class="text-left font-size-12">{{ forloop.counter }}</th>
+                    <th class="text-center">{{ candidate.name }}</th>
+                    <th class="text-center">{{ candidate.level }}</th>
+                    <th class="text-center">{{ candidate.post }}</th>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    No candidate has been registered
+    {% endif %}
+
+</div>
+<div class="card w-md-full mx-auto table-responsive">
+    <p class="card-title">Positions</p>
+    {% if positions %}
+    <table class="table table-stripped table-hover">
+        <thead>
+            <tr>
+                <th class="text-center"></th>
+                <th class="text-center">Name</th>
+                <th class="text-center">Candidates</th>
+                <th class="text-center">Number of candidates</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for position in positions %}
+            <tr>
+                <th class="text-center">{{ forloop.counter }}</th>
+                <th class="text-center">{{ position.name }}</th>
+                {% if position.candidates.all %}
+                <th class="text-center">{{ position.candidates.all|join:"</br>" }}</th>
+                {% else %}
+                <th class="text-center">{{ None }}</th>
+                {% endif %}
+                <th class="text-center">{{ position.candidates.count }}</th>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    No position has been registered
+    {% endif %}
+</div>
+
+{% endblock main %}
+
+{% block js %}
+
+{% endblock js %}

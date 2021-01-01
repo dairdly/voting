@@ -1,18 +1,31 @@
 from django.test import TestCase 
 from django.contrib.auth import authenticate
+from django.utils import timezone
 
-from main.models import Candidate, Position, User
+from main.models import Candidate, Position, User, Election
+
+from unittest.mock import patch
+
+from datetime import datetime, timedelta
 
 from faker import Faker
 fake = Faker()
 
 class TestCandidateModel(TestCase):
     def setUp(self):
+        start = datetime.now(timezone.utc)
+        delta = timedelta(days=1)
+        self.election = Election.objects.create(
+            name = fake.sentence(nb_words=2),
+            start = start,
+            end = start + delta
+        )
         self.position = Position.objects.create(name='An election position')
         self.candidate = Candidate.objects.create(
             name = fake.name(),
             level = fake.random_element(elements=(100, 200, 300, 400, 500)),
-            post = self.position
+            post = self.position,
+            election = self.election, 
         )
 
     def test_candidate_can_be_created(self):
@@ -101,4 +114,24 @@ class TestCreateSuperuserModel(TestCase):
     def test_valueError_for_is_superuser_false(self):
         with self.assertRaises(ValueError, msg="Superuser must be assigned to is_superuser=True"):
             self.superuser = User.objects.create_superuser(username=fake.user_name(), password=fake.password(), is_superuser=False)
- 
+
+
+class TestElectionModel(TestCase):
+    @patch('main.models.datetime')
+    def setUp(self, mock_datetime):
+        mock_datetime.now.return_value = datetime(2021, 1, 12, 3, 5, 23)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        self.election = Election.objects.create(
+            name=fake.sentence(nb_words=2),
+            start = datetime(2020, 11, 29, 5, 45, 34),
+            end = datetime(2020, 12, 29, 5, 45, 34),
+        )
+
+    def test_str_function(self):
+        self.assertEqual(str(self.election), self.election.name)
+
+    def test_started_is_set_to_true(self):
+        self.assertTrue(self.election.started)
+
+    def test_ended_is_set_to_true(self):
+        self.assertTrue(self.election.ended)
