@@ -2,11 +2,12 @@ from django.shortcuts import redirect, reverse
 from django.contrib import messages
 from django.http.response import HttpResponseRedirect
 
-from main.models import User, Election
+from main.models import User, refresh_election_status
 
 
 class UserRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
+        refresh_election_status()
         if not request.user.is_authenticated:
             return redirect(reverse('reg'))
         else: 
@@ -23,6 +24,7 @@ class StaffRequiredMixin:
         if created:
             admin.set_password('admin')
             admin.save()
+        refresh_election_status()
         
         if request.user.is_staff:
             return super().dispatch(request, *args, **kwargs)            
@@ -37,11 +39,7 @@ class AdminRequiredMixin:
         if created:
             admin.set_password('admin')
             admin.save()
-        try:
-            Election.objects.all().last().save()
-        except:
-            pass
-            
+        refresh_election_status()
         if request.user.is_superuser:
             return super().dispatch(request, *args, **kwargs)
         else:

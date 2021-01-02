@@ -1,8 +1,10 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models 
 
-
+from pytz import timezone
 from datetime import datetime
+
+afri = timezone('Africa/Lagos')
 
 class CustomAccountManager(BaseUserManager):
 
@@ -90,6 +92,19 @@ class Position(models.Model):
     def __str__(self):
         return self.name 
 
+def refresh_election_status():
+    try:
+        election = Election.objects.all().last()
+        if afri.localize(datetime.now()) >= election.start:
+            election.started = True
+            election.save()
+        if afri.localize(datetime.now()) >= election.end:
+            election.ended = True
+            election.save()
+        return election
+    except:
+        pass
+    return None
 
 class Election(models.Model):
     name = models.CharField(max_length=20)
@@ -102,8 +117,5 @@ class Election(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if datetime.now() >= self.start:
-            self.started = True
-        if datetime.now() >= self.end:
-            self.ended = True
         return super().save(*args, **kwargs)
+

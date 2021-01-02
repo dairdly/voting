@@ -14,7 +14,7 @@ from main.forms import (
     ChangeStaffCodeForm,
     ChangeAdminCodeForm,
 )
-from main.models import Candidate, Position, User, Election
+from main.models import Candidate, Position, User, Election, refresh_election_status
 from main.mixins import UserRequiredMixin, StaffRequiredMixin, AdminRequiredMixin
 
 
@@ -22,6 +22,10 @@ class RegFormView(FormView):
     form_class = RegForm 
     success_url = reverse_lazy("vote")
     template_name = "main/reg_form.html"
+
+    def get(self, request, *args, **kwargs):
+        refresh_election_status()
+        return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
         username = form.cleaned_data.get("username")

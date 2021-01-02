@@ -5,8 +5,11 @@ from main.models import Candidate, Position, Election, User
 
 from datetime import datetime
 
+from pytz import timezone
+
 import requests
 
+afri = timezone('Africa/Lagos')
 
 def validate_student(username, password):
     data = {
@@ -134,10 +137,12 @@ class StartElectionForm(forms.ModelForm):
         duration = self.cleaned_data.get('duration')
         start = " ".join(duration.split()[:2])
         end = " ".join(duration.split()[3:])
+        start = datetime.strptime(start, "%Y-%m-%d %H:%M")
+        end = datetime.strptime(end, "%Y-%m-%d %H:%M")
         election = Election.objects.create(
             name = form.cleaned_data.get("name"),
-            start = datetime.strptime(start, "%Y-%m-%d %H:%M"), 
-            end = datetime.strptime(end, "%Y-%m-%d %H:%M")
+            start = afri.localize(start), 
+            end = afri.localize(end)
         )
         return election
 
