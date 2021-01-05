@@ -16,6 +16,7 @@ Including another URLconf
 from django.urls import path
 
 from main.views import (
+    HomeView,
     RegFormView, 
     VoteFormView, 
     ThanksView, 
@@ -37,7 +38,8 @@ from main.views import (
 
 
 urlpatterns = [
-    path('', RegFormView.as_view(), name="reg"),
+    path('', HomeView.as_view(), name="home"),
+    path('reg/', RegFormView.as_view(), name="reg"),
     path('vote/', VoteFormView.as_view(), name="vote"),
     path('thanks/', ThanksView.as_view(), name="thanks"),
     path('register/candidate/', CandidateRegistrationView.as_view(), name="register_candidate"),

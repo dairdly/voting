@@ -21,13 +21,16 @@ def validate_student(username, password):
     except requests.exceptions.ConnectionError:
         return None
     if response.url == 'https://mouauportal.edu.ng/my-account-student.php':
-        return True
+        jamb_page = requests.get('https://mouauportal.edu.ng/old-session-logged-in/index.php')
+        if 'JAMB NUMBER' in jamb_page.content.decode('utf-8'):
+            return True
+        return False    
     else:
         return False
         
 
 class RegForm(forms.Form):
-    username = forms.CharField(max_length="10")
+    username = forms.CharField(max_length="10", widget=forms.widgets.PasswordInput())
     password = forms.CharField(max_length="10", widget=forms.widgets.PasswordInput())
 
     def clean(self):
@@ -39,7 +42,7 @@ class RegForm(forms.Form):
             if validate_student(username, password):
                 return cleaned_data
             else:
-                raise ValidationError('Invalid username and password')
+                raise ValidationError('No student has that username and password')
         else:
             raise ValidationError('No Election is running')
 

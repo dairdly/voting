@@ -42,18 +42,21 @@
         </a>
 
         <ul class="navbar-nav d-none d-md-flex">
-          <li class="nav-item"><a class="nav-link" href="{% url 'register_candidate' %}">Register Candidate</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'register_position' %}">Register Position</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+          {% if view.request.user.username == 'staff' or view.request.user.username == 'admin' %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'register_candidate' %}">Register Candidate</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'register_position' %}">Register Position</a></li>
 
-          <form method="POST" action="{% url 'logout' %}" id='logout_form'>
-          {% csrf_token %}
-          <input type="submit" value="submit" />
-          </form>
+            <form method="POST" action="{% url 'logout' %}" id='logout_form'>
+            {% csrf_token %}
+              <input type="submit" value="submit" />
+            </form>
 
-          {% if view.request.user.username == 'staff' %}
-          <li class="nav-item"><a class="nav-link" href="#" onclick=logout()>Logout as Staff</a></li>
-          {% elif view.request.user.username == 'admin' %}
-          <li class="nav-item"><a class="nav-link" href="#" onclick=logout()>Logout as Admin</a></li>
+            {% if view.request.user.username == 'staff' %}
+              <li class="nav-item"><a class="nav-link" href="#" onclick=logout()>Logout as Staff</a></li>
+              {% elif view.request.user.username == 'admin' %}
+              <li class="nav-item"><a class="nav-link" href="#" onclick=logout()>Logout as Admin</a></li>
+            {% endif %}
           {% endif %}
         </ul>
       </div>
@@ -78,22 +81,21 @@
       </div>
 
       <div class="sidebar-content">
-        <h5 class="sidebar-title">General</h5>
-        <div class="sidebar-divider"></div>
-        <a href="{% url 'reg' %}" class="sidebar-link">Vote</a>
-        <a href="{% url 'vlist' %}" class="sidebar-link">Voter's List</a>
+        {% if view.request.user.username == 'staff' or view.request.user.username == 'admin' %}
+          <h5 class="sidebar-title">Election Staff</h5>
+          <div class="sidebar-divider"></div>
+          <a href="{% url 'register_candidate' %}" class="sidebar-link">Register Candidate</a>
+          <a href="{% url 'register_position' %}" class="sidebar-link">Register Position</a>
+          <a href="{% url 'list' %}" class="sidebar-link">Staff List</a>
       </br>
-        <h5 class="sidebar-title">Election Staff</h5>
-        <div class="sidebar-divider"></div>
-        <a href="{% url 'register_candidate' %}" class="sidebar-link">Register Candidate</a>
-        <a href="{% url 'register_position' %}" class="sidebar-link">Register Position</a>
-        <a href="{% url 'list' %}" class="sidebar-link">Staff List</a>
-      </br>
+        {% if view.request.user.username == 'admin' %}
         <h5 class="sidebar-title">Election Admin</h5>
         <div class="sidebar-divider"></div>
         <a href="{% url 'manage' %}" class="sidebar-link">Manage Election</a>
         <a href="{% url 'change-codes' %}" class="sidebar-link">Manage Codes</a>
         <a href="{% url 'result' %}" class="sidebar-link">Election Result</a>
+        {% endif %}
+        {% endif %}
       </div>
     </div>
 
@@ -118,10 +120,9 @@
     
     const logout = function() {
       logout_input.click();
-      console.log('called')
     };
   </script>
-  {% block js %} {% endblock js %}
+  {% block js %}{% endblock js %}
 </body>
 
 </html>

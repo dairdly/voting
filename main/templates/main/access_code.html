@@ -1,5 +1,21 @@
-{% extends 'main/index.html' %}
+{% extends 'main/no_sidebar.html' %}
 {% load widget_tweaks %}
+
+{% block nav %}
+<nav class="navbar">
+    <div class="navbar-content">
+        <a href="{% url 'home' %}" class="navbar-brand">
+            MOUAU SUG E-VOTING
+        </a>
+
+        <ul class="navbar-nav d-none d-md-flex">
+            <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock nav %}
+
+
 {% block main %}
 <div class="card w-md-full mx-auto ">
     <h4 class="card-title">Enter your own access code</h4>
@@ -11,7 +27,11 @@
         </div>
         {% endfor %}
         <div class="form-group">
+            {% if form.access_code.errors %}
+            <div class="alert alert-danger filled my-5" role="alert">
             {{ form.access_code.errors }}
+            </div>
+            {% endif %}
             <label for={{ form.access_code.id_for_label }} class="required">Access Code</label>
             {{ form.access_code|add_class:"form-control"|attr:"required:required" }}
         </div>

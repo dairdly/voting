@@ -1,5 +1,5 @@
 from django.http.response import HttpResponseRedirect
-from django.views.generic import FormView, TemplateView, View, ListView, CreateView
+from django.views.generic import FormView, TemplateView, View, ListView
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -16,6 +16,13 @@ from main.forms import (
 )
 from main.models import Candidate, Position, User, Election, refresh_election_status
 from main.mixins import UserRequiredMixin, StaffRequiredMixin, AdminRequiredMixin
+
+class HomeView(TemplateView):
+    template_name = "main/home.html"
+
+    def get(self, request, *args, **kwargs):
+        logout(request)
+        return super().get(request, *args, **kwargs)
 
 
 class RegFormView(FormView):
@@ -140,6 +147,9 @@ class AccessCodeView(FormView):
     form_class = AccessCodeForm
     template_name = "main/access_code.html"
 
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
     def form_valid(self, form):
         access_code = form.cleaned_data.get('access_code')
         staff = authenticate(username='staff', password=access_code)
@@ -149,12 +159,16 @@ class AccessCodeView(FormView):
         elif admin:
             login(self.request, admin)
         else:
+            messages.add_message(self.request, messages.ERROR, "Access denied")
             return HttpResponseRedirect(reverse('access_code'))
         next_url = self.request.GET.get('next')
-        if next_url:
+        if next_url and next_url != reverse('reg'):
             return HttpResponseRedirect(next_url)
         else:
-            return HttpResponseRedirect(reverse('reg'))
+            if staff:
+                return HttpResponseRedirect(reverse('list'))
+            if admin:
+                return HttpResponseRedirect(reverse('manage'))
 
 
 class LogoutView(TemplateView):
@@ -163,7 +177,7 @@ class LogoutView(TemplateView):
     def post(self, request, *args, **kwargs):
         logout(request)
         messages.add_message(request, messages.WARNING, "You are logged out")
-        return HttpResponseRedirect(reverse('reg'))
+        return HttpResponseRedirect(reverse('home'))
   
 
 class ManageElectionView(AdminRequiredMixin, FormView):
@@ -183,6 +197,7 @@ class ManageElectionView(AdminRequiredMixin, FormView):
     
 class CancelElectionView(AdminRequiredMixin, View):
     def post(self, request, *args, **kwargs):
+        User.objects.exclude(username="staff").exclude(username="admin").delete()
         Election.objects.all().delete()
         messages.add_message(request, messages.SUCCESS, "Election has been deleted parmanently")
         return HttpResponseRedirect(reverse('manage'))

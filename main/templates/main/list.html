@@ -51,7 +51,6 @@
                 <th class="text-center"></th>
                 <th class="text-center">Name</th>
                 <th class="text-center">level</th>
-                <th class="text-center">votes</th>
                 <th class="text-center">Position</th>
                 <th class="text-center"></th>
             </tr>
@@ -63,7 +62,6 @@
                     <th class="text-left font-size-12">{{ forloop.counter }}</th>
                     <th class="text-center">{{ candidate.name }}</th>
                     <th class="text-center">{{ candidate.level }}</th>
-                    <th class="text-center">{{ candidate.votes }}</th>
                     <th class="text-center">{{ candidate.post }}</th>
                     <th class="text-center"><a href="#modal-del-candidate" class="" role="button" onclick=confirmCandidateDelete({{candidate.pk}})>
                     <span aria-hidden="true" class="text-danger">&times;</span></a></th>

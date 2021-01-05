@@ -1,6 +1,24 @@
-{% extends 'main/index.html' %}
+{% extends 'main/no_sidebar.html' %}
+{% load static %}
 {% load widget_tweaks %}
+
+{% block nav %}
+<nav class="navbar">
+    <div class="navbar-content">
+        <a href="{% url 'home' %}" class="navbar-brand">
+            MOUAU SUG E-VOTING
+        </a>
+
+        <ul class="navbar-nav d-none d-md-flex">
+            <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock nav %}
+
 {% block main %}
+<p>You can add one deadly video or gif as background </p>
+
 <div class="card w-md-full mx-auto ">
     <h4 class="card-title">Enter your MOUAU portal issued username and password</h4>
     <form action="{% url 'reg' %}" method="POST" class="">
@@ -24,7 +42,8 @@
     </form>
 </div>
 {% endblock main %}
+<script src="{% static 'main/js/halfmoon.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/js/halfmoon.min.js"></script>
+</body>
 
-{% block js %}
-
-{% endblock js %}
+</html>

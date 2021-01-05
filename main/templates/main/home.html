@@ -1,0 +1,27 @@
+{% extends 'main/no_sidebar.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block main %}
+<p>You can add one deadly video or gif as background </p>
+<div class="row"><a class="m-10 btn btn-lg btn-success" href="{% url 'reg' %}">Vote</a></a>
+    <div class="card w-md-full mx-auto">
+        <p class="card-title">Enter your Access Code</p>
+        <form action="{% url 'access_code' %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.access_code.errors }}
+                <label for=code class="required">Access Code</label>
+                <input type="password" name="access_code" required class="form-control" id="id_access_code">
+            </div>
+            <input class="btn btn-primary" type="submit" value="submit" />
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock main %}
+<script src="{% static 'main/js/halfmoon.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/js/halfmoon.min.js"></script>
+</body>
+
+</html>
